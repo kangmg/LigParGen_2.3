@@ -83,7 +83,7 @@ def boss2opmTorsion(bnd_df, num2opls, st_no, molecule_data, xmlf):
         tor_bos = final_df.drop(
             ['I', 'J', 'K', 'L', 'TI', 'TJ', 'TK', 'TL'], axis=1)
         tor_bos = tor_bos.drop_duplicates()
-        df = final_df.iloc[tor_bos.index][['TI', 'TJ', 'TK', 'TL',
+        df = final_df.loc[tor_bos.index][['TI', 'TJ', 'TK', 'TL',
                                          'V1', 'V2', 'V3', 'V4', 'TY', 'I', 'J', 'K', 'L']]
         torlist = []
         for row in df[df.TY == 'Proper'].iterrows():
@@ -127,7 +127,7 @@ def boss2opmBond(num2opls, molecule_data, st_no, xmlf):
     xmlf.write('<HarmonicBondForce>\n')
     for i in bnd_df.index:
         xmlf.write('<Bond class1=\"%s\" class2=\"%s\" length=\"%6.6f\" k=\"%6.6f\"/>\n' %
-                   (bnd_df.iloc[i]['T1'], bnd_df.iloc[i]['T2'], bnd_df.iloc[i]['RIJ'], bnd_df.iloc[i]['KIJ']))
+                   (bnd_df.loc[i]['T1'], bnd_df.loc[i]['T2'], bnd_df.loc[i]['RIJ'], bnd_df.loc[i]['KIJ']))
     xmlf.write('</HarmonicBondForce>\n')
     return full_bnd, connects
 

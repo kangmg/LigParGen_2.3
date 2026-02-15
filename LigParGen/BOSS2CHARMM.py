@@ -81,7 +81,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
         tor_df = tor_df.drop_duplicates(['NAME', 'TY'])
     pro_df = tor_df[tor_df.TY == 'Proper']
     for i in list(pro_df.index):
-        ndf = pro_df.iloc[i]
+        ndf = pro_df.loc[i]
         pro_out = retDihed(ndf.to_dict())
         for i in range(4):
             prm.write('%s' % pro_out[i])
@@ -90,7 +90,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
     prm.write('\nIMPROPER \n')
     imp_df = tor_df[tor_df.TY == 'Improper']
     for i in list(imp_df.index):
-        ndf = tor_df.iloc[i]
+        ndf = tor_df.loc[i]
         imp_out = retDihedImp(ndf.to_dict())
         for i in range(len(imp_out)):
             prm.write('%s' % imp_out[i])
