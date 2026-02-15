@@ -126,7 +126,62 @@ def xyz_prep(df):
     hmol = Chem.MolFromMolFile('UNK.mol',removeHs=False,sanitize=False)
     return hmol 
 
-def LoadModel(): 
+def GetEnergy(fname):
+    """Extract final single point energy from ORCA log file (in Hartree)."""
+    energy = None
+    with open(fname) as f:
+        for line in f:
+            if 'FINAL SINGLE POINT ENERGY' in line:
+                energy = float(line.strip().split()[-1])
+    return energy
+
+def BoltzmannAverageCharges(log_files, pt_df, rad_df, a0_df, netcharge, temperature=298.15):
+    """Compute Boltzmann-averaged CM5 charges from multiple ORCA log files."""
+    kB = 3.1668114e-6  # Boltzmann constant in Hartree/K
+    kT = kB * temperature
+
+    energies = []
+    cm5_charges_list = []
+    dfs = []
+
+    for fname in log_files:
+        energy = GetEnergy(fname)
+        assert energy is not None, "Could not find FINAL SINGLE POINT ENERGY in %s" % fname
+        data_cm5 = GetLogFile(fname, pt_df, rad_df)
+        qcm5 = HirshfeldToCM5(data_cm5, a0_df, netcharge=netcharge)
+        energies.append(energy)
+        cm5_charges_list.append(np.array(qcm5.CM5_final))
+        dfs.append(qcm5)
+
+    energies = np.array(energies)
+    min_idx = int(np.argmin(energies))
+
+    # Shift energies so minimum is 0 (numerical stability)
+    energies -= energies.min()
+
+    # Boltzmann weights
+    weights = np.exp(-energies / kT)
+    weights /= weights.sum()
+
+    print('Boltzmann weights (T=%.2f K):' % temperature)
+    for f, w, e in zip(log_files, weights, energies):
+        print('  %s: weight=%.6f  dE=%.6f Hartree' % (os.path.basename(f), w, e))
+
+    # Weighted average of CM5_final charges
+    avg_charges = np.zeros_like(cm5_charges_list[0])
+    for w, charges in zip(weights, cm5_charges_list):
+        avg_charges += w * charges
+
+    # Use the lowest-energy conformer's geometry
+    result_df = dfs[min_idx].copy()
+    result_df['CM5_final'] = avg_charges
+
+    # Re-create inp_orca.pdb from lowest-energy conformer geometry
+    xyz_prep(dfs[min_idx])
+
+    return result_df
+
+def LoadModel():
     import json
 #    with open("cm5pars.json") as tweetfile:
 #        cm5_model = json.loads(tweetfile.read())

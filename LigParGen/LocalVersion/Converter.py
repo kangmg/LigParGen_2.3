@@ -4,11 +4,13 @@ from BOSS2CHARMM import mainBOSS2CHARMM
 from BOSS2GMX import mainBOSS2GMX
 from BOSS2LAMMPS import mainBOSS2LAMMPS
 from CreatZmat import GenMolRep
-from Orca2CM5charges import LoadModel, GetLogFile, HirshfeldToCM5,AddCM5Charges
+from Orca2CM5charges import LoadModel, GetLogFile, HirshfeldToCM5, AddCM5Charges, BoltzmannAverageCharges
 from fepzmat import CM5_file2zmat
 import argparse
 import pickle
 import os
+import glob
+import shutil
 
 def main():
 
@@ -79,7 +81,7 @@ def main():
     parser.add_argument(
         "-p", "--pdb", help="Submit PDB file with Hydrogens Added", type=str)
     parser.add_argument(
-        "-q", "--qorca", help="ORCA LOG FILE", type=str)
+        "-q", "--qorca", help="ORCA LOG FILE(s) - glob pattern for Boltzmann averaging (e.g. 'conf_*.log')", type=str)
     parser.add_argument(
         "-r", "--resname", help="Residue name (Should be a 3 LETTER WORD)", type=str)
     parser.add_argument(
@@ -144,10 +146,20 @@ def convert(**kwargs):
         optim = 0
         lbcc = False
         a0,rd,pt = LoadModel()
-        os.system('cp  %s /tmp/'%qorca)
+        # Expand glob pattern to get list of ORCA log files
+        log_files = sorted(glob.glob(qorca))
+        assert len(log_files) > 0, "No files matched pattern: %s" % qorca
+        for f in log_files:
+            shutil.copy(f, '/tmp/')
         os.chdir('/tmp/')
-        data_cm5 = GetLogFile(qorca,pt,rd)
-        qcm5 = HirshfeldToCM5(data_cm5,a0,netcharge=charge)
+        log_basenames = [os.path.basename(f) for f in log_files]
+        if len(log_basenames) == 1:
+            print('Processing single ORCA log file: %s' % log_basenames[0])
+            data_cm5 = GetLogFile(log_basenames[0], pt, rd)
+            qcm5 = HirshfeldToCM5(data_cm5, a0, netcharge=charge)
+        else:
+            print('Processing %d ORCA log files with Boltzmann averaging' % len(log_basenames))
+            qcm5 = BoltzmannAverageCharges(log_basenames, pt, rd, a0, charge)
         os.system('cp inp_orca.pdb /tmp/%s.pdb' %resname)
         pdb = '%s.pdb'%resname
 
