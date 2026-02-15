@@ -283,7 +283,7 @@ def boss2CharmmBond(molecule_data, st_no):
     bnd_df['UR'] = ((bnd_df.cl1 + bnd_df.cl2) *
                     (bnd_df.cl1 + bnd_df.cl2 + 1) * 0.5) + bnd_df.cl1
 #    bnd_df.to_csv('bos_bonds.csv', index=False)
-    hb_df = bnd_df.drop(['cl1', 'cl2', 'UF', 'UR'], 1)
+    hb_df = bnd_df.drop(['cl1', 'cl2', 'UF', 'UR'], axis=1)
     hb_df = hb_df.drop_duplicates()
     return bnd_df
 
@@ -354,7 +354,7 @@ def Boss2CharmmTorsion(bnd_df, num2opls, st_no, molecule_data, num2typ2symb):
 def create_xyz_file(residue_name,mol):
     boss_xyz = mol.MolData['XYZ']
     # convert .pdb to Tinker style .xyz file
-    os.system('babel -ipdb %s.pdb -otxyz %s.xyz > LLN 2>&1' % (residue_name,residue_name))
+    os.system('obabel -ipdb %s.pdb -otxyz %s.xyz > LLN 2>&1' % (residue_name,residue_name))
     # Read in the file
     with open('/tmp/%s.xyz' % residue_name, 'r') as xyz_file:
         xyz_data = xyz_file.readlines()
