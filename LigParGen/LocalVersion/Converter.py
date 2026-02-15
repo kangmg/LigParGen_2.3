@@ -81,7 +81,7 @@ def main():
     parser.add_argument(
         "-p", "--pdb", help="Submit PDB file with Hydrogens Added", type=str)
     parser.add_argument(
-        "-q", "--qorca", help="ORCA LOG FILE(s) - glob pattern for Boltzmann averaging (e.g. 'conf_*.log')", type=str)
+        "-q", "--qorca", help="ORCA LOG FILE(s) - multiple files or glob pattern for Boltzmann averaging", nargs='+')
     parser.add_argument(
         "-r", "--resname", help="Residue name (Should be a 3 LETTER WORD)", type=str)
     parser.add_argument(
@@ -146,9 +146,19 @@ def convert(**kwargs):
         optim = 0
         lbcc = False
         a0,rd,pt = LoadModel()
-        # Expand glob pattern to get list of ORCA log files
-        log_files = sorted(glob.glob(qorca))
-        assert len(log_files) > 0, "No files matched pattern: %s" % qorca
+        # Support both pre-expanded file lists and glob patterns
+        if isinstance(qorca, list):
+            log_files = []
+            for pattern in qorca:
+                expanded = glob.glob(pattern)
+                if expanded:
+                    log_files.extend(expanded)
+                else:
+                    log_files.append(pattern)
+            log_files = sorted(log_files)
+        else:
+            log_files = sorted(glob.glob(qorca))
+        assert len(log_files) > 0, "No files matched: %s" % qorca
         for f in log_files:
             shutil.copy(f, '/tmp/')
         os.chdir('/tmp/')
