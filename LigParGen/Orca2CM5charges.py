@@ -121,8 +121,8 @@ def xyz_prep(df):
         opdb.write('%-6s    %8.3f%8.3f%8.3f\n' %
                    (r.ATOM, r.X, r.Y, r.Z))
     opdb.close()
-    os.system('obabel -ixyz inp_orca.xyz -omol UNK.mol')
-    os.system('obabel -ixyz inp_orca.xyz -opdb inp_orca.pdb')
+    os.system('obabel -ixyz inp_orca.xyz -omol -O UNK.mol')
+    os.system('obabel -ixyz inp_orca.xyz -opdb -O inp_orca.pdb')
     hmol = Chem.MolFromMolFile('UNK.mol',removeHs=False,sanitize=False)
     return hmol 
 
