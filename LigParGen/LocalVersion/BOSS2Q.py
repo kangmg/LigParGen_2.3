@@ -89,7 +89,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
         tor_df = tor_df.drop_duplicates(['NAME', 'TY'])
     pro_df = tor_df[tor_df.TY == 'Proper']
     for i in list(pro_df.index):
-        ndf = pro_df.ix[i]
+        ndf = pro_df.loc[i]
         pro_out = retDihed(ndf.to_dict())
         for i in range(4):
             prm.write('%s' % pro_out[i])
@@ -98,7 +98,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
     prm.write('\n[impropers]\n')
     imp_df = tor_df[tor_df.TY == 'Improper']
     for i in list(imp_df.index):
-        ndf = tor_df.ix[i]
+        ndf = tor_df.loc[i]
         imp_out = retDihedImp(ndf.to_dict())
         for i in range(len(imp_out)):
             prm.write('%s' % imp_out[i])
@@ -159,7 +159,7 @@ def boss2CharmmBond(molecule_data, st_no):
                     (bnd_df.cl1 + bnd_df.cl2 + 1) * 0.5) + bnd_df.cl2
     bnd_df['UR'] = ((bnd_df.cl1 + bnd_df.cl2) *
                     (bnd_df.cl1 + bnd_df.cl2 + 1) * 0.5) + bnd_df.cl1
-    hb_df = bnd_df.drop(['cl1', 'cl2', 'UF', 'UR'], 1)
+    hb_df = bnd_df.drop(['cl1', 'cl2', 'UF', 'UR'], axis=1)
     hb_df = hb_df.drop_duplicates()
     return bnd_df
 

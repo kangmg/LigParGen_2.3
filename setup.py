@@ -11,10 +11,15 @@ setup(
   url='https://bitbucket.org/leelasd/ligpargen_2017_sep18',
   keywords = ['computational chemistry', 'force fields', 'molecular dynamics'],
   classifiers = [
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Scientific/Engineering',
         ],
+  python_requires='>=3.8',
   install_requires=['numpy','pandas','networkx'],
   entry_points={
         'console_scripts': [

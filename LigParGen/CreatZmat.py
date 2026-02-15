@@ -23,9 +23,9 @@ def AsitIsZmat(ifile,optim,resid):
     iform = ifile.split('.')
     # CREATE A MOL FILE FROM ANY FILE
     if iform[1] == 'smi':
-        os.system('babel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
+        os.system('obabel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
     else:
-        os.system('babel -i%s %s -omol %s.mol ---errorlevel 1 -b &>LL' % (iform[1], ifile, iform[0]))
+        os.system('obabel -i%s %s -omol %s.mol ---errorlevel 1 -b &>LL' % (iform[1], ifile, iform[0]))
     mollines = open(iform[0] + '.mol', 'r').readlines()
     COOS, ATYPES, MolBonds = ReadMolFile(mollines)
     G_mol, mol_icords = make_graphs(ATYPES, COOS, MolBonds)
@@ -36,9 +36,9 @@ def CanonicaliedZmat(ifile,optim,resid):
     iform = ifile.split('.')
     # CREATE A MOL FILE FROM ANY FILE
     if iform[1] == 'smi':
-        os.system('babel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
+        os.system('obabel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
     else:
-        os.system('babel -i%s %s -omol --canonical %s.mol' % (iform[1], ifile, iform[0]))
+        os.system('obabel -i%s %s -omol --canonical %s.mol' % (iform[1], ifile, iform[0]))
     mollines = open(iform[0] + '.mol', 'r').readlines()
     COOS, ATYPES, MolBonds = ReadMolFile(mollines)
     G_mol, mol_icords = make_graphs(ATYPES, COOS, MolBonds)
@@ -135,7 +135,7 @@ def make_graphs(atoms, coos, bonds):
     all_imps = {}
     for i in imp_keys:
         nei = list(G.neighbors(i))
-        if G.node[i]['atno'] == 6:
+        if G.nodes[i]['atno'] == 6:
             all_imps[i] = [nei[0], i, nei[1], nei[2]]
     MOL_ICOORDS = {'BONDS': all_bonds,
                    'ANGLES': dict_new_angs, 'TORSIONS': dict_new_tors, 'IMPROPERS': all_imps}
@@ -180,7 +180,7 @@ def print_ZMAT(atoms, G_mol, mol_icords, coos, zmat_name, resid):
     for i in range(1, len(atoms) + 1):
         Z_ATOMS[i + 2] = atoms[i]
     for i in range(1, len(atoms) + 1):
-        Z_NO[i + 2] = G_mol.node[i]['atno']
+        Z_NO[i + 2] = G_mol.nodes[i]['atno']
     n_ats = 0
     B_LINK = {}
     for i in G_mol.nodes():
