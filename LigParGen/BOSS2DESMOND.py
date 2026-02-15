@@ -65,7 +65,7 @@ def boss2opmTorsion(bnd_df, num2opls, st_no, molecule_data, itpf):
         tor_bos = final_df.drop(
             ['I', 'J', 'K', 'L', 'TI', 'TJ', 'TK', 'TL'], axis=1)
         tor_bos = tor_bos.drop_duplicates()
-        df = final_df.iloc[tor_bos.index]
+        df = final_df.loc[tor_bos.index]
         return final_df, df
     else:
         return final_df, final_df
