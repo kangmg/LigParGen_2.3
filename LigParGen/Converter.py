@@ -2,11 +2,7 @@ from LigParGen.BOSSReader import BOSSReader, CheckForHs
 from LigParGen.BOSS2OPENMM import mainBOSS2OPM
 from LigParGen.BOSS2CHARMM import mainBOSS2CHARMM
 from LigParGen.BOSS2GMX import mainBOSS2GMX
-from LigParGen.BOSS2XPLOR import mainBOSS2XPLOR
-from LigParGen.BOSS2Q import mainBOSS2Q
 from LigParGen.BOSS2LAMMPS import mainBOSS2LAMMPS
-from LigParGen.BOSS2DESMOND import mainBOSS2DESMOND 
-from LigParGen.BOSS2TINKER import mainBOSS2TINKER 
 from LigParGen.CreatZmat import GenMolRep
 from LigParGen.Orca2CM5charges import LoadModel, GetLogFile, HirshfeldToCM5,AddCM5Charges
 from LigParGen.mol_boss import convert_pdb2mol
@@ -209,20 +205,12 @@ def convert(**kwargs):
     pickle.dump(mol, open(resname + ".p", "wb"))
     mainBOSS2OPM(resname, clu)
     print('DONE WITH OPENMM')
-    mainBOSS2Q(resname, clu)
-    print('DONE WITH Q')
-    mainBOSS2XPLOR(resname, clu)
-    print('DONE WITH XPLOR')
     mainBOSS2CHARMM(resname, clu)
     print('DONE WITH CHARMM/NAMD')
     mainBOSS2GMX(resname, clu)
     print('DONE WITH GROMACS')
     mainBOSS2LAMMPS(resname, clu)
     print('DONE WITH LAMMPS')
-    mainBOSS2DESMOND(resname, clu)
-    print('DONE WITH DESMOND')
-    mainBOSS2TINKER(resname, clu)
-    print('DONE WITH TINKER')
     with ZipFile(starting_dir+'/%s.zip'%resname, 'w') as zipObj2:
         for f in glob.glob('/tmp/%s.*'%resname):
             zipObj2.write(f,os.path.basename(f))

@@ -2,11 +2,7 @@ from BOSSReader import BOSSReader, CheckForHs
 from BOSS2OPENMM import mainBOSS2OPM
 from BOSS2CHARMM import mainBOSS2CHARMM
 from BOSS2GMX import mainBOSS2GMX
-from BOSS2XPLOR import mainBOSS2XPLOR
-from BOSS2Q import mainBOSS2Q
 from BOSS2LAMMPS import mainBOSS2LAMMPS
-from BOSS2DESMOND import mainBOSS2DESMOND 
-from BOSS2TINKER import mainBOSS2TINKER 
 from CreatZmat import GenMolRep
 from Orca2CM5charges import LoadModel, GetLogFile, HirshfeldToCM5,AddCM5Charges
 from fepzmat import CM5_file2zmat
@@ -199,20 +195,12 @@ def convert(**kwargs):
     pickle.dump(mol, open(resname + ".p", "wb"))
     mainBOSS2OPM(resname, clu)
     print('DONE WITH OPENMM')
-    mainBOSS2Q(resname, clu)
-    print('DONE WITH Q')
-    mainBOSS2XPLOR(resname, clu)
-    print('DONE WITH XPLOR')
     mainBOSS2CHARMM(resname, clu)
     print('DONE WITH CHARMM/NAMD')
     mainBOSS2GMX(resname, clu)
     print('DONE WITH GROMACS')
     mainBOSS2LAMMPS(resname, clu)
     print('DONE WITH LAMMPS')
-    mainBOSS2DESMOND(resname, clu)
-    print('DONE WITH DESMOND')
-    mainBOSS2TINKER(resname, clu)
-    print('DONE WITH TINKER')
     os.remove(resname + ".p")
     mol.cleanup()
 
