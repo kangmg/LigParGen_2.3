@@ -159,19 +159,23 @@ def convert(**kwargs):
         else:
             log_files = sorted(glob.glob(qorca))
         assert len(log_files) > 0, "No files matched: %s" % qorca
-        for f in log_files:
-            shutil.copy(f, '/tmp/')
+        # Copy files to /tmp with unique names to avoid overwrites
+        log_basenames = []
+        for idx, f in enumerate(log_files):
+            unique_name = 'orca_conf_%03d.out' % idx
+            shutil.copy(f, '/tmp/' + unique_name)
+            log_basenames.append(unique_name)
         os.chdir('/tmp/')
-        log_basenames = [os.path.basename(f) for f in log_files]
         if len(log_basenames) == 1:
-            print('Processing single ORCA log file: %s' % log_basenames[0])
+            print('Processing single ORCA log file: %s' % log_files[0])
             data_cm5 = GetLogFile(log_basenames[0], pt, rd)
             qcm5 = HirshfeldToCM5(data_cm5, a0, netcharge=charge)
         else:
             print('Processing %d ORCA log files with Boltzmann averaging' % len(log_basenames))
-            qcm5 = BoltzmannAverageCharges(log_basenames, pt, rd, a0, charge)
-        os.system('cp inp_orca.pdb /tmp/%s.pdb' %resname)
-        pdb = '%s.pdb'%resname
+            qcm5 = BoltzmannAverageCharges(log_basenames, pt, rd, a0, charge,
+                                           original_names=[os.path.basename(f) for f in log_files])
+        pdb = '%s.pdb' % resname
+        shutil.copy('inp_orca.pdb', pdb)
 
     if smiles != None:
         os.chdir('/tmp/')

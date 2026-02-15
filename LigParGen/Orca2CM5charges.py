@@ -135,10 +135,11 @@ def GetEnergy(fname):
                 energy = float(line.strip().split()[-1])
     return energy
 
-def BoltzmannAverageCharges(log_files, pt_df, rad_df, a0_df, netcharge, temperature=298.15):
+def BoltzmannAverageCharges(log_files, pt_df, rad_df, a0_df, netcharge, temperature=298.15, original_names=None):
     """Compute Boltzmann-averaged CM5 charges from multiple ORCA log files."""
     kB = 3.1668114e-6  # Boltzmann constant in Hartree/K
     kT = kB * temperature
+    display_names = original_names if original_names else log_files
 
     energies = []
     cm5_charges_list = []
@@ -164,8 +165,8 @@ def BoltzmannAverageCharges(log_files, pt_df, rad_df, a0_df, netcharge, temperat
     weights /= weights.sum()
 
     print('Boltzmann weights (T=%.2f K):' % temperature)
-    for f, w, e in zip(log_files, weights, energies):
-        print('  %s: weight=%.6f  dE=%.6f Hartree' % (os.path.basename(f), w, e))
+    for name, w, e in zip(display_names, weights, energies):
+        print('  %s: weight=%.6f  dE=%.6f Hartree' % (name, w, e))
 
     # Weighted average of CM5_final charges
     avg_charges = np.zeros_like(cm5_charges_list[0])

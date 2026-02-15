@@ -164,19 +164,24 @@ def convert(**kwargs):
             # Single glob pattern string (from API call)
             log_files = sorted(glob.glob(qorca))
         assert len(log_files) > 0, "No files matched: %s" % qorca
-        for f in log_files:
-            shutil.copy(f, '/tmp/')
+        # Copy files to /tmp with unique names to avoid overwrites
+        log_basenames = []
+        for idx, f in enumerate(log_files):
+            unique_name = 'orca_conf_%03d.out' % idx
+            shutil.copy(f, '/tmp/' + unique_name)
+            log_basenames.append(unique_name)
         os.chdir('/tmp/')
-        log_basenames = [os.path.basename(f) for f in log_files]
         if len(log_basenames) == 1:
-            print('Processing single ORCA log file: %s' % log_basenames[0])
+            print('Processing single ORCA log file: %s' % log_files[0])
             data_cm5 = GetLogFile(log_basenames[0], pt, rd)
             qcm5 = HirshfeldToCM5(data_cm5, a0, netcharge=charge)
         else:
             print('Processing %d ORCA log files with Boltzmann averaging' % len(log_basenames))
-            qcm5 = BoltzmannAverageCharges(log_basenames, pt, rd, a0, charge)
-        os.system('cp inp_orca.pdb /tmp/%s.pdb' %resname)
-        pdb = '%s.pdb'%resname
+            qcm5 = BoltzmannAverageCharges(log_basenames, pt, rd, a0, charge,
+                                           original_names=[os.path.basename(f) for f in log_files])
+        pdb = '%s.pdb' % resname
+        # Already in /tmp/, just rename
+        shutil.copy('inp_orca.pdb', pdb)
 
     if smiles != None:
         os.chdir('/tmp/')
@@ -193,9 +198,10 @@ def convert(**kwargs):
         GenMolRep(mol, optim, resname, charge)
         mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
     elif pdb != None:
-        pdb_file_path = os.path.basename(pdb) 
-        shutil.copyfile(pdb_file_path,'/tmp/%s'%pdb)
-        #os.system('cp %s /tmp/' % pdb)
+        pdb_file_path = os.path.abspath(pdb)
+        dest_path = '/tmp/%s' % os.path.basename(pdb)
+        if os.path.abspath(pdb_file_path) != os.path.abspath(dest_path):
+            shutil.copyfile(pdb_file_path, dest_path)
         os.chdir('/tmp/')
         mol_file = convert_pdb2mol(pdb)
         GenMolRep(mol_file, optim, resname, charge)
