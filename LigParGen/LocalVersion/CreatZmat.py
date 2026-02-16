@@ -3,8 +3,8 @@
 """
 AutoZmat_VersionLSD:
 A python program to create BOSS zmatrix from any molecular input format.
-Need BOSS and OpenBabel executable to work
-Python Modeules Needed - networkx, numpy, pandas
+Need BOSS executable to work
+Python Modules Needed - rdkit, numpy, pandas
 Created on Wed Jun 14 2017
 
 @author: Leela Sriram Dodda
@@ -17,15 +17,46 @@ import numpy as np
 from LigParGen.Vector_algebra import pairing_func, angle, dihedral, tor_id, ang_id,bossElement2Num, Distance
 import itertools
 import collections
-import networkx as nx
+from collections import deque
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+def _rdkit_to_molfile(mol, molfilename):
+    """Write an RDKit mol object to a V2000 MOL file."""
+    Chem.MolToMolFile(mol, molfilename)
+
+def _read_input_to_mol(ifile):
+    """Read various molecular file formats using RDKit and return mol object + prefix."""
+    iform = ifile.split('.')
+    prefix = iform[0]
+    ext = iform[1].lower()
+    if ext == 'smi':
+        smi = open(ifile, 'r').readline().strip()
+        mol = Chem.MolFromSmiles(smi)
+        mol = Chem.AddHs(mol)
+        AllChem.EmbedMolecule(mol, AllChem.ETKDGv3())
+        AllChem.MMFFOptimizeMolecule(mol)
+    elif ext == 'mol':
+        mol = Chem.MolFromMolFile(ifile, removeHs=False, sanitize=False)
+        try:
+            Chem.SanitizeMol(mol)
+        except Exception:
+            pass
+    elif ext == 'pdb':
+        mol = Chem.MolFromPDBFile(ifile, removeHs=False, sanitize=False)
+        try:
+            Chem.SanitizeMol(mol)
+        except Exception:
+            pass
+    else:
+        raise ValueError('Unsupported file format: %s' % ext)
+    return mol, prefix
 
 def AsitIsZmat(ifile,optim,resid):
     iform = ifile.split('.')
-    # CREATE A MOL FILE FROM ANY FILE
-    if iform[1] == 'smi':
-        os.system('obabel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
-    else:
-        os.system('obabel -i%s %s -omol %s.mol ---errorlevel 1 -b &>LL' % (iform[1], ifile, iform[0]))
+    # CREATE A MOL FILE FROM ANY FILE using RDKit
+    rdmol, prefix = _read_input_to_mol(ifile)
+    _rdkit_to_molfile(rdmol, prefix + '.mol')
     mollines = open(iform[0] + '.mol', 'r').readlines()
     COOS, ATYPES, MolBonds = ReadMolFile(mollines)
     G_mol, mol_icords = make_graphs(ATYPES, COOS, MolBonds)
@@ -34,11 +65,12 @@ def AsitIsZmat(ifile,optim,resid):
 
 def CanonicaliedZmat(ifile,optim,resid):
     iform = ifile.split('.')
-    # CREATE A MOL FILE FROM ANY FILE
-    if iform[1] == 'smi':
-        os.system('obabel -i%s %s -omol %s.mol --gen3D' % (iform[1], ifile, iform[0]))
-    else:
-        os.system('obabel -i%s %s -omol --canonical %s.mol' % (iform[1], ifile, iform[0]))
+    # CREATE A MOL FILE FROM ANY FILE using RDKit with canonical ordering
+    rdmol, prefix = _read_input_to_mol(ifile)
+    # Apply canonical atom ordering
+    new_order = Chem.CanonicalRankAtoms(rdmol)
+    rdmol = Chem.RenumberAtoms(rdmol, list(new_order))
+    _rdkit_to_molfile(rdmol, prefix + '.mol')
     mollines = open(iform[0] + '.mol', 'r').readlines()
     COOS, ATYPES, MolBonds = ReadMolFile(mollines)
     G_mol, mol_icords = make_graphs(ATYPES, COOS, MolBonds)
@@ -106,8 +138,76 @@ def ReadMolFile(mollines):
     return (coos, atypes, bonds)
 
 
+class SimpleGraph:
+    """Lightweight directed graph replacing networkx.DiGraph for molecular topology."""
+    def __init__(self):
+        self._nodes = {}       # {node_id: {attr_dict}}
+        self._adj = {}         # {node_id: {neighbor_id: {edge_attr}}}
+
+    def add_node(self, n, **attrs):
+        self._nodes[n] = attrs
+        if n not in self._adj:
+            self._adj[n] = {}
+
+    def add_edge(self, u, v, **attrs):
+        if u not in self._adj:
+            self._adj[u] = {}
+        if v not in self._adj:
+            self._adj[v] = {}
+        self._adj[u][v] = attrs
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    def __getitem__(self, n):
+        return self._adj[n]
+
+    def neighbors(self, n):
+        return self._adj[n].keys()
+
+    def degree(self, n):
+        return len(self._adj[n])
+
+
+def _bfs_shortest_path_lengths(graph):
+    """Compute all-pairs shortest path lengths using BFS."""
+    all_lengths = {}
+    for source in graph._adj:
+        dist = {source: 0}
+        queue = deque([source])
+        while queue:
+            v = queue.popleft()
+            for w in graph._adj[v]:
+                if w not in dist:
+                    dist[w] = dist[v] + 1
+                    queue.append(w)
+        all_lengths[source] = dist
+    return all_lengths
+
+
+def _all_simple_paths(graph, source, target, cutoff):
+    """Find all simple paths from source to target with length <= cutoff."""
+    if source == target:
+        return [[source]]
+    paths = []
+    stack = [(source, [source])]
+    while stack:
+        node, path = stack.pop()
+        if len(path) - 1 >= cutoff:
+            continue
+        for neighbor in graph._adj[node]:
+            if neighbor not in path:
+                new_path = path + [neighbor]
+                if neighbor == target:
+                    paths.append(new_path)
+                elif len(new_path) - 1 < cutoff:
+                    stack.append((neighbor, new_path))
+    return paths
+
+
 def make_graphs(atoms, coos, bonds):
-    G = nx.DiGraph()
+    G = SimpleGraph()
     # ADD NODES USING ATOM TYPES AND COORDINATES
     for i in coos.keys():
         G.add_node(i, XYZ=coos[i], elem=atoms[i],
@@ -115,23 +215,20 @@ def make_graphs(atoms, coos, bonds):
     for (i, j, rij) in zip(bonds['BI'], bonds['BJ'], bonds['RIJ']):
         G.add_edge(i, j, distance=rij)
         G.add_edge(j, i, distance=rij)
-    all_ps = dict(nx.algorithms.all_pairs_shortest_path_length(G))
+    all_ps = _bfs_shortest_path_lengths(G)
     all_paths = []
     for s in all_ps.keys():
         for e in all_ps[s].keys():
-#            if   all_ps[s][e] == 1: all_paths+=list(nx.algorithms.shortest_simple_paths(G,s,e)) 
-#            elif all_ps[s][e] == 2: all_paths+=list(nx.algorithms.shortest_simple_paths(G,s,e)) 
-#            elif all_ps[s][e] == 3: all_paths+=list(nx.algorithms.shortest_simple_paths(G,s,e)) 
-            if   all_ps[s][e] == 1: all_paths+=list(nx.algorithms.all_simple_paths(G,s,e,cutoff=1))
-            elif all_ps[s][e] == 2: all_paths+=list(nx.algorithms.all_simple_paths(G,s,e,cutoff=2))
-            elif all_ps[s][e] == 3: all_paths+=list(nx.algorithms.all_simple_paths(G,s,e,cutoff=3))
+            if   all_ps[s][e] == 1: all_paths+=_all_simple_paths(G,s,e,cutoff=1)
+            elif all_ps[s][e] == 2: all_paths+=_all_simple_paths(G,s,e,cutoff=2)
+            elif all_ps[s][e] == 3: all_paths+=_all_simple_paths(G,s,e,cutoff=3)
 
     all_bonds = [p for p in all_paths if len(set(p))==2]
     new_angs =  [p for p in all_paths if len(set(p))==3]
     new_tors =  [p for p in all_paths if len(set(p))==4]
     dict_new_tors = {tor_id(t): t for t in new_tors}
     dict_new_angs = {ang_id(t): t for t in new_angs}
-    imp_keys = [n for n in G.nodes() if G.degree(n) / 2 == 3]
+    imp_keys = [n for n in G._adj if G.degree(n) / 2 == 3]
     all_imps = {}
     for i in imp_keys:
         nei = list(G.neighbors(i))
@@ -183,7 +280,7 @@ def print_ZMAT(atoms, G_mol, mol_icords, coos, zmat_name, resid):
         Z_NO[i + 2] = G_mol.nodes[i]['atno']
     n_ats = 0
     B_LINK = {}
-    for i in G_mol.nodes():
+    for i in G_mol.nodes:
         if n_ats > 0:
             neigs = np.sort(list(G_mol.neighbors(i)))
             B_LINK[i] = neigs[0]
@@ -192,7 +289,7 @@ def print_ZMAT(atoms, G_mol, mol_icords, coos, zmat_name, resid):
         n_ats += 1
     n_ats = 0
     A_LINK = {}
-    for i in G_mol.nodes():
+    for i in G_mol.nodes:
         if n_ats > 1:
             neigs = np.sort(list(G_mol.neighbors(B_LINK[i])))
             A_LINK[i] = neigs[0]
@@ -200,7 +297,7 @@ def print_ZMAT(atoms, G_mol, mol_icords, coos, zmat_name, resid):
             Z_ANGLES[i + 2] = (i + 2, B_LINK[i] + 2, neigs[0] + 2, ang)
         n_ats += 1
     n_ats = 0
-    for i in G_mol.nodes():
+    for i in G_mol.nodes:
         if n_ats > 2:
             neigs =list(G_mol.neighbors(A_LINK[i]))
             neigs = np.array([j for j in neigs if j not in [i, B_LINK[i], A_LINK[i]]])

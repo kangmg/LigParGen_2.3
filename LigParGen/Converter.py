@@ -56,11 +56,10 @@ def main():
     REQUIREMENTS:
     BOSS (need to set BOSSdir in bashrc and cshrc)
     Preferably Anaconda python with following modules
-    pandas 
+    pandas
     argparse
     numpy
-    openbabel
-    networkx
+    rdkit
 
     Please cite following references: 
     1. LigParGen web server: an automatic OPLS-AA parameter generator for organic ligands  
@@ -132,8 +131,6 @@ def convert(**kwargs):
 
     clu = False
 
-    # assert (which('obabel')
-            # is not None), "OpenBabel is Not installed or \n the executable location is not accessable"
     if os.path.exists('/tmp/' + resname + '.xml'):
         os.system('/bin/rm /tmp/' + resname + '.*')
     if lbcc:
