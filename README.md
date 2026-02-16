@@ -1,34 +1,34 @@
 # LigParGen 2.3
 
-ORCA 계산 결과로부터 OPLS-AA/CM5 force field 파라미터를 생성한다. 여러 conformer의 ORCA output을 입력하면 Boltzmann averaging으로 CM5 전하를 계산한다. 최신 Python 패키지(networkx, pandas, numpy 등)와의 호환성을 위해 deprecated API를 수정하였다.
+Generates OPLS-AA/CM5 force field parameters from ORCA output files. Supports Boltzmann-averaged CM5 charges from multiple conformers. Updated for compatibility with recent versions of networkx, pandas, numpy, etc.
 
-출력 포맷: OpenMM, CHARMM, GROMACS, LAMMPS, TINKER, Desmond, Q, PDB2PQR, MCPRO/BOSS
+Output formats: OpenMM, CHARMM, GROMACS, LAMMPS
 
-## 환경변수
+## Environment
 
 ```bash
 export BOSSdir=/path/to/BOSS
 ```
 
-## 사용법
+## Usage
 
-단일 conformer:
+Single conformer:
 
 ```bash
 LigParGen -q output.out -r RES -c 0 -o 0
 ```
 
-여러 conformer (Boltzmann averaging):
+Multiple conformers (Boltzmann averaging):
 
 ```bash
 LigParGen -q /path/to/conf_*/output.out -r RES -c 0 -o 0
 ```
 
-| 옵션 | 설명 |
-|------|------|
-| `-q` | ORCA log 파일 경로 (glob 패턴 가능) |
-| `-r` | residue 이름 (3자) |
-| `-c` | 분자 전하 |
-| `-o` | 최적화 수준 (ORCA 사용 시 0 고정) |
+| Option | Description |
+|--------|-------------|
+| `-q` | ORCA log file path (glob pattern supported) |
+| `-r` | Residue name (3 characters) |
+| `-c` | Molecular charge |
+| `-o` | Optimization level (must be 0 for ORCA) |
 
-결과는 현재 디렉토리에 `RES.zip`으로 저장된다.
+Output is saved as `RES.zip` in the current directory.
