@@ -131,7 +131,7 @@ def make_graphs(atoms, coos, bonds):
     new_tors =  [p for p in all_paths if len(set(p))==4]
     dict_new_tors = {tor_id(t): t for t in new_tors}
     dict_new_angs = {ang_id(t): t for t in new_angs}
-    imp_keys = [n for n in G.nodes() if G.degree(n) / 2 == 3]
+    imp_keys = [n for n in G.nodes() if len(list(G.neighbors(n))) == 3]
     all_imps = {}
     for i in imp_keys:
         nei = list(G.neighbors(i))

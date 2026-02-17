@@ -1,7 +1,8 @@
 '''
-Orca2CM5charges.py 
-Script to Get CM5 charges from Hirshfeld Charges 
+Orca2CM5charges.py
+Script to Get CM5 charges from Hirshfeld Charges
 Input: Log File from Orca Calculation
+       ORCA keywords used: ! RKS RIJCOSX M062X def2-TZVP def2/J TightSCF DefGrid3 Hirshfeld PMODEL
 Output: CSV file with coordinates, raw CM5 charges, rdkit atomic FP averaged CM5 charges
 Written by: Leela S. Dodda (Jorgensen Group@Yale)
 Email Id: leela.dodda@yale.edu
