@@ -3,18 +3,17 @@
 # BONDING INFO AND ASSIGNING BCC CORRECTIONS FOR ATOMS
 import numpy as np
 import pandas as pd
-from rdkit import Chem
+import openbabel
 
 def convert_pdb2mol(pdbfile):
-    print('Converting PDB to MOL using RDKit')
+    print('Converting PDB to MOL using OpenBabel')
     prefix = pdbfile.split('.')[0]
     mol_file = '%s.mol'%prefix
-    mol = Chem.MolFromPDBFile(pdbfile, removeHs=False, sanitize=False)
-    try:
-        Chem.SanitizeMol(mol)
-    except Exception:
-        pass
-    Chem.MolToMolFile(mol, mol_file)
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats("pdb", "mol")
+    mol = openbabel.OBMol()
+    obConversion.ReadFile(mol, pdbfile)   # Open Babel will uncompress automatically
+    obConversion.WriteFile(mol, mol_file)
     return mol_file
 
 def rev_bnd(bnd):

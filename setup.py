@@ -20,7 +20,7 @@ setup(
         'Topic :: Scientific/Engineering',
         ],
   python_requires='>=3.8',
-  install_requires=['numpy','pandas'],
+  install_requires=['numpy','pandas','networkx'],
   entry_points={
         'console_scripts': [
             'LigParGen=LigParGen.Converter:main',

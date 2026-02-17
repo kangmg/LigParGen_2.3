@@ -114,18 +114,18 @@ def HirshfeldToCM5(df,a0,netcharge):
     return(df)
 
 def xyz_prep(df):
-    # Build RDKit mol from coordinates using rdDetermineBonds
-    from rdkit.Chem import rdDetermineBonds
-    xyz_block = '%d\n\n' % len(df)
-    for (i, r) in df.iterrows():
-        xyz_block += '%-2s %12.6f %12.6f %12.6f\n' % (r.ATOM, r.X, r.Y, r.Z)
-    raw_mol = Chem.MolFromXYZBlock(xyz_block)
-    rdDetermineBonds.DetermineBonds(raw_mol)
-    # Write MOL and PDB files
-    Chem.MolToMolFile(raw_mol, 'UNK.mol')
-    Chem.MolToPDBFile(raw_mol, 'inp_orca.pdb')
-    hmol = Chem.MolFromMolFile('UNK.mol', removeHs=False, sanitize=False)
-    return hmol
+    opdb = open('inp_orca.xyz', 'w+')
+    opdb.write('%3d\n'%(len(df.QCM5)))
+    opdb.write('REMARK LIGPARGEN GENERATED XYZ FILE\n')
+    num = 0
+    for (i, r) in df.iterrows(): 
+        opdb.write('%-6s    %8.3f%8.3f%8.3f\n' %
+                   (r.ATOM, r.X, r.Y, r.Z))
+    opdb.close()
+    os.system('obabel -ixyz inp_orca.xyz -omol -O UNK.mol')
+    os.system('obabel -ixyz inp_orca.xyz -opdb -O inp_orca.pdb')
+    hmol = Chem.MolFromMolFile('UNK.mol',removeHs=False,sanitize=False)
+    return hmol 
 
 def LoadModel(): 
     import json
