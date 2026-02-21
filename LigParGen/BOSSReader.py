@@ -203,13 +203,15 @@ def pairing_func(a, b):
 
 
 def ucomb(vec, blist):
+    """Count consecutive bond pairs in vec that exist in blist.
+    For proper torsion I-J-K-L, checks I-J, J-K, K-L and returns 3.
+    For improper torsions, consecutive bonds are fewer, returning <3."""
     res = 0
-    for i in range(len(vec)):
-        for j in range(i + 1, len(vec)):
-            a, b = vec[i], vec[j]
-            ans = (a + b) * (a + b + 1) * 0.5
-            if (ans + a in blist) or (ans + b in blist):
-                res += 1
+    for idx in range(len(vec) - 1):
+        a, b = vec[idx], vec[idx + 1]
+        ans = (a + b) * (a + b + 1) * 0.5
+        if (ans + a in blist) or (ans + b in blist):
+            res += 1
     return res
 
 
