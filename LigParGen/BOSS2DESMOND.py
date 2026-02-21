@@ -49,7 +49,7 @@ def boss2opmTorsion(bnd_df, num2opls, st_no, molecule_data, itpf):
     at_df = pd.DataFrame(ats, columns=['I', 'J', 'K', 'L'])
     final_df = pd.concat([dhd_df, at_df], axis=1)
     final_df = final_df.reindex(at_df.index)
-    bndlist = list(bnd_df.UR) + (list(bnd_df.UR))
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     final_df['TY'] = ['Proper' if ucomb(list([final_df.I[n], final_df.J[n], final_df.K[
         n], final_df.L[n]]), bndlist) == 3 else 'Improper' for n in range(len(final_df.I))]
     final_df['SumV'] = np.abs(
@@ -78,8 +78,6 @@ def boss2gmxBond(molecule_data, st_no, itpf):
     bnd_df = pd.DataFrame(bdat)
     bnd_df['KIJ'] = bnd_df['KIJ'] 
     bnd_df['RIJ'] = bnd_df['RIJ'] 
-    bnd_df['UNQ'] = [pairing_func(i + 1, j + 1)[0]
-                     for i, j in zip(bnd_df.cl1, bnd_df.cl2)]
     bnd_df['UNQ'] = [pairing_func(i, j)[0]
                      for i, j in zip(bnd_df.cl1, bnd_df.cl2)]
     bnd_df['UF'] = ((bnd_df.cl1 + bnd_df.cl2) *

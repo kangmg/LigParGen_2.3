@@ -107,14 +107,13 @@ def ReadMolFile(mollines):
 
 
 def make_graphs(atoms, coos, bonds):
-    G = nx.DiGraph()
+    G = nx.Graph()
     # ADD NODES USING ATOM TYPES AND COORDINATES
     for i in coos.keys():
         G.add_node(i, XYZ=coos[i], elem=atoms[i],
                    atno=bossElement2Num(atoms[i]))
     for (i, j, rij) in zip(bonds['BI'], bonds['BJ'], bonds['RIJ']):
         G.add_edge(i, j, distance=rij)
-        G.add_edge(j, i, distance=rij)
     all_ps = dict(nx.algorithms.all_pairs_shortest_path_length(G))
     all_paths = []
     for s in all_ps.keys():

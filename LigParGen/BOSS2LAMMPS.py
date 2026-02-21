@@ -53,7 +53,7 @@ def Boss2LammpsLMP(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df,molecule_data
     prm.write('\nDihedral Coeffs  \n\n')
     for i,row in dihedral_df.iterrows(): 
         prm.write('%8d%11.3f%11.3f%11.3f%11.3f \n'%(i+1,row.V1,row.V2,row.V3,row.V4))
-    bndlist = list(bnd_df.UR) + (list(bnd_df.UR))
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     improper_df = tor_df[tor_df.TY == 'Improper']
     improper_df.index = range(len(improper_df.V2))
     if len(improper_df.index)>0:
@@ -108,8 +108,7 @@ def Boss2CharmmTorsion(bnd_df, num2opls, st_no, molecule_data, num2typ2symb):
     at_df = pd.DataFrame(ats, columns=['I', 'J', 'K', 'L'])
     final_df = pd.concat([dhd_df, at_df], axis=1)
     final_df = final_df.reindex(at_df.index)
-    final_df = final_df.reindex(at_df.index)
-    bndlist = list(bnd_df.UR) + (list(bnd_df.UR))
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     final_df['TY'] = ['Proper' if ucomb(list([final_df.I[n], final_df.J[n], final_df.K[
         n], final_df.L[n]]), bndlist) == 3 else 'Improper' for n in range(len(final_df.I))]
     final_df['TI'] = [num2typ2symb[j][2] for j in final_df.I]
