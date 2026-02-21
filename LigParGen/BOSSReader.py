@@ -204,12 +204,12 @@ def pairing_func(a, b):
 
 def ucomb(vec, blist):
     res = 0
-    for a in vec:
-        vec.remove(a)
-        for b in vec:
+    for i in range(len(vec)):
+        for j in range(i + 1, len(vec)):
+            a, b = vec[i], vec[j]
             ans = (a + b) * (a + b + 1) * 0.5
             if (ans + a in blist) or (ans + b in blist):
-                res = res + 1
+                res += 1
     return res
 
 
@@ -218,9 +218,10 @@ def tor_cent(vec, blist):
     for a in vec:
         na = 0
         for b in vec:
-            ans = (a + b) * (a + b + 1) * 0.5
-            if (ans + a in blist) or (ans + b in blist):
-                na += 1
+            if a != b:
+                ans = (a + b) * (a + b + 1) * 0.5
+                if (ans + a in blist) or (ans + b in blist):
+                    na += 1
         db[a] = na
     new_vec = list(sorted(db, key=db.__getitem__, reverse=True))
     return (new_vec)
@@ -257,8 +258,9 @@ def bossElement2Mass(elem):
         'Zn': 65.38, }
     try:
         res = symb2mass[elem]
-    except NameError:
-        print("Mass for atom %s is not available \n add it to symb2mass dictionary")
+    except KeyError:
+        print("Mass for atom %s is not available \n add it to symb2mass dictionary" % elem)
+        raise
     return res
 
 
@@ -419,7 +421,7 @@ class BOSSReader(object):
                 bnds['cl2'].append(int(word[1]))
                 bnds['RIJ'].append(float(word[2]))
                 bnds['KIJ'].append(float(word[3]))
-                bnds['TIJ'].append(line[-5:])
+                bnds['TIJ'].append(word[-1].strip())
                 nbnd += 1
         return (bnds)
 

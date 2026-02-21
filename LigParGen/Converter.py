@@ -183,69 +183,72 @@ def convert(**kwargs):
         # Already in /tmp/, just rename
         shutil.copy('inp_orca.pdb', pdb)
 
-    if smiles != None:
-        os.chdir('/tmp/')
-        smifile = open('%s.smi' % resname, 'w+')
-        smifile.write('%s' % smiles)
-        smifile.close()
-        GenMolRep('%s.smi' % resname, optim, resname, charge)
-        mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
-    elif mol != None:
-        mol_file_path = os.path.basename(mol) 
-        shutil.copyfile(mol_file_path,'/tmp/%s'%mol)
-#        os.system('cp %s /tmp/' % mol)
-        os.chdir('/tmp/')
-        GenMolRep(mol, optim, resname, charge)
-        mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
-    elif pdb != None:
-        pdb_file_path = os.path.abspath(pdb)
-        dest_path = '/tmp/%s' % os.path.basename(pdb)
-        if os.path.abspath(pdb_file_path) != os.path.abspath(dest_path):
-            shutil.copyfile(pdb_file_path, dest_path)
-        os.chdir('/tmp/')
-        mol_file = convert_pdb2mol(pdb)
-        GenMolRep(mol_file, optim, resname, charge)
-        mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
-#        clu = True
-    elif zmat != None:
-        os.system('cp %s /tmp/%s.z' % (zmat,resname))
-        os.chdir('/tmp/')
-        print('THIS OPTION IS FOR SUPPLYING OPLS-AA Z-matrices only')
-        if optim > 0: 
-            print('CANNOT OPTIMIZE with Z-matrix Option')
-            optim = 0
-        if lbcc: print('CANNOT APPLY LBCC FOR A OPLS-AA Z-MATRIX')
-        mol = BOSSReader('%s.z' % resname, optim, charge, lbcc=False)
-    if qorca != None: 
-        print('I am here')
-        mol = AddCM5Charges(mol,qcm5)
-        CM5_file2zmat('%s.z' % resname, qcm5.CM5_final,
-                      oname='/tmp/%s_CM5.z' % resname)
-        os.system('mv %s.z %s_CM1A.z' %
-                  (resname,resname))
-        os.system('mv %s_CM5.z %s.z' % (resname,resname))
+    try:
+        if smiles != None:
+            os.chdir('/tmp/')
+            smifile = open('%s.smi' % resname, 'w+')
+            smifile.write('%s' % smiles)
+            smifile.close()
+            GenMolRep('%s.smi' % resname, optim, resname, charge)
+            mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
+        elif mol != None:
+            mol_abs_path = os.path.abspath(mol)
+            dest_path = '/tmp/%s' % os.path.basename(mol)
+            if mol_abs_path != os.path.abspath(dest_path):
+                shutil.copyfile(mol_abs_path, dest_path)
+            os.chdir('/tmp/')
+            GenMolRep(os.path.basename(mol), optim, resname, charge)
+            mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
+        elif pdb != None:
+            pdb_file_path = os.path.abspath(pdb)
+            dest_path = '/tmp/%s' % os.path.basename(pdb)
+            if os.path.abspath(pdb_file_path) != os.path.abspath(dest_path):
+                shutil.copyfile(pdb_file_path, dest_path)
+            os.chdir('/tmp/')
+            mol_file = convert_pdb2mol(pdb)
+            GenMolRep(mol_file, optim, resname, charge)
+            mol = BOSSReader('%s.z' % resname, optim, charge, lbcc)
+    #        clu = True
+        elif zmat != None:
+            os.system('cp %s /tmp/%s.z' % (zmat,resname))
+            os.chdir('/tmp/')
+            print('THIS OPTION IS FOR SUPPLYING OPLS-AA Z-matrices only')
+            if optim > 0:
+                print('CANNOT OPTIMIZE with Z-matrix Option')
+                optim = 0
+            if lbcc: print('CANNOT APPLY LBCC FOR A OPLS-AA Z-MATRIX')
+            mol = BOSSReader('%s.z' % resname, optim, charge, lbcc=False)
+        if qorca != None:
+            print('I am here')
+            mol = AddCM5Charges(mol,qcm5)
+            CM5_file2zmat('%s.z' % resname, qcm5.CM5_final,
+                          oname='/tmp/%s_CM5.z' % resname)
+            os.system('mv %s.z %s_CM1A.z' %
+                      (resname,resname))
+            os.system('mv %s_CM5.z %s.z' % (resname,resname))
 
-    assert (mol.MolData['TotalQ']['Reference-Solute'] ==
-            charge), "PROPOSED CHARGE IS NOT POSSIBLE: SOLUTE MAY BE AN OPEN SHELL"
-    assert(CheckForHs(mol.MolData['ATOMS'])
-           ), "Hydrogens are not added. Please add Hydrogens"
+        assert (mol.MolData['TotalQ']['Reference-Solute'] ==
+                charge), "PROPOSED CHARGE IS NOT POSSIBLE: SOLUTE MAY BE AN OPEN SHELL"
+        assert(CheckForHs(mol.MolData['ATOMS'])
+               ), "Hydrogens are not added. Please add Hydrogens"
 
-    pickle.dump(mol, open(resname + ".p", "wb"))
-    mainBOSS2OPM(resname, clu)
-    print('DONE WITH OPENMM')
-    mainBOSS2CHARMM(resname, clu)
-    print('DONE WITH CHARMM/NAMD')
-    mainBOSS2GMX(resname, clu)
-    print('DONE WITH GROMACS')
-    mainBOSS2LAMMPS(resname, clu)
-    print('DONE WITH LAMMPS')
-    with ZipFile(starting_dir+'/%s.zip'%resname, 'w') as zipObj2:
-        for f in glob.glob('/tmp/%s.*'%resname):
-            zipObj2.write(f,os.path.basename(f))
-    zipObj2.close()
-    os.remove(resname + ".p")
-    mol.cleanup()
-    os.chdir(starting_dir)
+        pickle.dump(mol, open(resname + ".p", "wb"))
+        mainBOSS2OPM(resname, clu)
+        print('DONE WITH OPENMM')
+        mainBOSS2CHARMM(resname, clu)
+        print('DONE WITH CHARMM/NAMD')
+        mainBOSS2GMX(resname, clu)
+        print('DONE WITH GROMACS')
+        mainBOSS2LAMMPS(resname, clu)
+        print('DONE WITH LAMMPS')
+        with ZipFile(starting_dir+'/%s.zip'%resname, 'w') as zipObj2:
+            for f in glob.glob('/tmp/%s.*'%resname):
+                zipObj2.write(f,os.path.basename(f))
+        zipObj2.close()
+        os.remove(resname + ".p")
+        mol.cleanup()
+    finally:
+        os.chdir(starting_dir)
     print('DONE WITH ALL \n Back to %s'%starting_dir)
 
 if __name__ == "__main__":

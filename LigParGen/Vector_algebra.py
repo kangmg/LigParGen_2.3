@@ -19,8 +19,9 @@ def bossElement2Num(elem):
     }
     try:
         res = symb2mass[elem]
-    except NameError:
-        print("Mass for atom %s is not available \n add it to symb2mass dictionary")
+    except KeyError:
+        print("Atomic number for atom %s is not available \n add it to symb2mass dictionary" % elem)
+        raise
     return res
 
 
@@ -91,7 +92,7 @@ def angle(p0, p1, p2):
     v1 = subtract(p2, p1)
     cosa = dot(v0, v1) / length(v0) / length(v1)
 #    print(cosa)
-    return 180.0 * np.arccos(round(cosa,3)) * 7.0 / 22.0
+    return 180.0 * np.arccos(round(cosa,3)) / np.pi
 
 
 def dihedral(p0, p1, p2, p3):
@@ -109,7 +110,7 @@ def dihedral(p0, p1, p2, p3):
     a = Mol_angle(v0, v3)
     if dot(cross(v0, v3), v12) > 0:
         a = -a
-    return a * 180.0 * 7.0 / 22.0
+    return a * 180.0 / np.pi
 
 
 def tor_id(a):

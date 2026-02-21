@@ -90,7 +90,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
     prm.write('\nIMPROPER \n')
     imp_df = tor_df[tor_df.TY == 'Improper']
     for i in list(imp_df.index):
-        ndf = tor_df.loc[i]
+        ndf = imp_df.loc[i]
         imp_out = retDihedImp(ndf.to_dict())
         for i in range(len(imp_out)):
             prm.write('%s' % imp_out[i])
@@ -135,7 +135,7 @@ def Boss2CharmmTorsion(bnd_df, num2opls, st_no, molecule_data, num2typ2symb):
     at_df = pd.DataFrame(ats, columns=['I', 'J', 'K', 'L'])
     final_df = pd.concat([dhd_df, at_df], axis=1)
     final_df = final_df.reindex(at_df.index)
-    bndlist = list(bnd_df.UR) + (list(bnd_df.UR))
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     final_df['TY'] = ['Proper' if ucomb(list([final_df.I[n], final_df.J[n], final_df.K[
         n], final_df.L[n]]), bndlist) == 3 else 'Improper' for n in range(len(final_df.I))]
     final_df['TI'] = [num2typ2symb[j][2] for j in final_df.I]

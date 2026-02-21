@@ -59,7 +59,7 @@ def Boss2CharmmRTF(num2typ2symb, Qs, resid, bnd_df, angs,props,imps):
     rtf.write('\n{ Bonds: atomName1  atomName2 } \n')
     for (x, y) in zip(bnd_df.cl1, bnd_df.cl2):
         rtf.write('BOND %s %s \n' % (num2typ2symb[x][0], num2typ2symb[y][0]))
-    bndlist = list(bnd_df.UR) + list(bnd_df.UR)
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     imp_list = []
     for i,dat in imps.iterrows():
         ndata =tor_cent([dat.I, dat.J, dat.K, dat.L], bndlist) 
@@ -101,7 +101,7 @@ def Boss2CharmmPRM(resid, num2typ2symb, Qs, bnd_df, ang_df, tor_df):
     prm.write('\n{ Improper Dihedrals: aType1 aType2 aType3 aType4 kt period phase }\n')
     imp_df = tor_df[tor_df.TY == 'Improper']
     for i in list(imp_df.index):
-        ndf = tor_df.loc[i]
+        ndf = imp_df.loc[i]
         imp_out = retDihedImp(ndf.to_dict())
         for i in range(len(imp_out)):
             prm.write('%s' % imp_out[i])
@@ -146,7 +146,7 @@ def Boss2CharmmTorsion(bnd_df, num2opls, st_no, molecule_data, num2typ2symb):
     at_df = pd.DataFrame(ats, columns=['I', 'J', 'K', 'L'])
     final_df = pd.concat([dhd_df, at_df], axis=1)
     final_df = final_df.reindex(at_df.index)
-    bndlist = list(bnd_df.UR) + (list(bnd_df.UR))
+    bndlist = list(bnd_df.UR) + list(bnd_df.UF)
     final_df['TY'] = ['Proper' if ucomb(list([final_df.I[n], final_df.J[n], final_df.K[
         n], final_df.L[n]]), bndlist) == 3 else 'Improper' for n in range(len(final_df.I))]
     final_df['TI'] = [num2typ2symb[j][2] for j in final_df.I]
